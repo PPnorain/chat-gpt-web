@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Demonstration of ChatGPT API in a Python Flask Application. A Skolo Online course.">
+
+    <title>RecoderC Chat Assistant</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/duck.jpg') }}">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous"> -->
+    <link href="{{ url_for('static', filename='style/bootstrap.min.css') }}" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous"  sourcemap="/web/static/style/bootstrap.min.css.map">
+  </head>
+  <body>
+    <header>
+      <style> #loading {margin: auto;} </style>
+      <!-- Fixed navbar -->
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">RecoderC Chat Assistant</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0"></ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Begin page content -->
+    <main class="flex-shrink-0">
+      <div class="container">
+        <br>
+        <br>
+        <h1 class="mt-5">An AI Chat Bot</h1>
+        <p class="lead">A RecoderC AI chat bot. Who's name is Hai. You can chat with him whatever you want.</p>
+        <ul id="list-group" class="list-group w-auto"></ul>
+
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="chat-input">
+          <div class="input-group-append">
+            <button id="gpt-button" class="btn btn-primary">Chat</button>
+            <span id="loading" class="spinner-border spinner-border-sm d-none"></span>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="{{ url_for('static', filename='style/jquery-3.6.3.min.js') }}"  integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='style/bootstrap.bundle.min.js') }}" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <!-- <script>
+       sourceMappingURL=/static/style/bootstrap.bundle.min.js.map
+    </script> -->
+    <script src="{{ url_for('static', filename='style/marked.min.js') }}" ></script>
+
+    <script>
+        const sessionId = Date.now().toString();
+        const chatHistoryStr = sessionStorage.getItem(sessionId);
+        var chatHistory = chatHistoryStr ? JSON.parse(chatHistoryStr):[['你是谁？','我是人工智能Hai。']];
+        let link_text_id = 0;
+        $("#gpt-button").click(function(){
+            var button = $("#gpt-button");
+            var loading = $('#loading');
+            var question = $("#chat-input").val();
+
+            // 显示加载指示器并禁用按钮
+            $("#loading").removeClass("d-none");
+            $("#gpt-button").prop("disabled", true);
+            const options = {
+                  mangle: false,
+                  headerIds: false
+                };
+            // 使用 options 进行 marked.js 的初始化
+            marked.setOptions(options);
+            var html_question = marked.parse(question);
+            var img = $("<img>", {
+                    src:"{{ url_for('static', filename='images/duck.jpg') }}",
+                    alt:"twbs",
+                    width:"32",
+                    height:"32",
+                    class:"rounded-circle flex-shrink-0"
+                })
+            // 创建一个新的链接元素
+            var link = $("<li>", {
+                href: "#",
+                class: "list-group-item list-group-item-action d-flex gap-3 py-3",
+                html: html_question
+                }).prepend(img);
+
+            // 将链接元素添加到列表中
+            $("#list-group").append(link);
+            $("#chat-input").val('');
+
+          // 发送历史搜索信息到后端
+          // $.ajax({
+          //     type: "POST",
+          //     url: "/",
+          //     data: {'prompt': question,
+          //            'history': JSON.stringify(chatHistory)},
+          //     success: function (response) {
+          //         var html = marked.parse(response.answer);
+          //         var img = $("<img>", {
+          //           src: "/static/images/favicon.png",
+          //           alt: "twbs",
+          //           width: "32",
+          //           height: "32",
+          //           class: "rounded-circle flex-shrink-0"
+          //         });
+                  // var link = $("<a>", {
+                  //   href: "#",
+                  //   // class: "list-group-item list-group-item-action -flex gap-3 py-3",
+                  //   class: "list-group-item list-group-item-action flex-column gap-3 py-3",
+                  //   html: img.add($("<span>").css("height","5rem")).add(html)
+                  // });
+          //         // var link = $("<a>", {
+          //         //   href: "#",
+          //         //   class: "list-group-item list-group-item-action flex-row gap-3 py-3",
+          //         //   // class: "list-group-item list-group-item-action flex-column gap-3 py-3",
+          //         //   html: html
+          //         // }).prepend(img);
+          //         const newHistroyTuple = [question, response.answer];
+          //         chatHistory.push(newHistroyTuple);
+          //         console.log(chatHistory);
+          //         sessionStorage.setItem(sessionId, JSON.stringify(chatHistory));
+          //         $("#list-group").append(link);
+                  
+          //         // 隐藏加载指示器并解锁按钮
+          //         $("#loading").addClass("d-none");
+          //         $("#gpt-button").prop("disabled", false);
+          //       },
+          //     error: function(jqXHR, textStatus, errorThrown) {
+          //       console.log(textStatus, errorThrown);
+          //     }
+          //   });
+
+          
+          fetch('/', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({'prompt': question,'history': JSON.stringify(chatHistory)})
+              })
+              .then(response => {
+                  // var html = marked.parse(response.answer);
+                  var img = $("<img>", {
+                    src: "/static/images/favicon.png",
+                    alt: "twbs",
+                    width: "32",
+                    height: "32",
+                    class: "rounded-circle flex-shrink-0"
+                  });
+                  var link = $("<li>", {
+                    href: "#",
+                    class: "list-group-item list-group-item-action flex-column gap-3 py-3",
+                    html: img.add($("<span>").css("height","5rem").attr("id","link-text-"+link_text_id))
+                  });
+                  $("#list-group").append(link);
+                  const reader = response.body.getReader();
+                  const decoder = new TextDecoder();
+                  let lastIndex = 0;
+                  let markdownData = '';
+                  // readChunk实现持续通信
+                  const readChunk = () => {
+                      reader.read().then(({ done, value }) => {
+                          const data = decoder.decode(value);
+                          const newData = data.slice(lastIndex);
+                          console.log(newData, lastIndex);
+                          const linkText = $("#link-text-"+link_text_id);
+                          markdownData += newData
+                          htmldata = marked.parse(markdownData);
+
+                          linkText.html(htmldata)
+                          lastIndex = data.length; // 更新最后的索引位置
+                          // 通信完成标志
+                          if (done) {
+                              // 隐藏加载指示器并解锁按钮
+                              $("#loading").addClass("d-none");
+                              $("#gpt-button").prop("disabled", false);
+                              console.log(link_text_id);
+                              link_text_id++;
+
+                              const newHistroyTuple = [question, markdownData];
+                              chatHistory.push(newHistroyTuple);
+                              sessionStorage.setItem(sessionId, JSON.stringify(chatHistory));
+                              return;
+                          }
+                          readChunk();
+                      });
+                  };
+                  readChunk();
+                  })
+              .catch(error => {
+                  // 处理错误
+                  });
+        });
+    </script>
+  </body>
+</html>
