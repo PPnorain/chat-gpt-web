@@ -1,4 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
+from peft import PeftConfig, PeftModel
 
 class AutoModelWrapper:
     model_map = {
@@ -6,13 +7,15 @@ class AutoModelWrapper:
         'chatglm':AutoModel,
     }
     @classmethod
-    def from_pretrained(self, model_path, model_name):
+    def from_pretrained(self, model_path, model_name, lora_path=None):
         model = self.model_map[model_name].from_pretrained(model_path, trust_remote_code=True)
+        if lora_path is not None:
+            model = PeftModel.from_pretrained(model, lora_path)
         return model
 
-def general_loading(model_path, model_name):
+def general_loading(model_path, model_name, lora_path=None):
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    model = AutoModelWrapper.from_pretrained(model_path, model_name).half().cuda()
+    model = AutoModelWrapper.from_pretrained(model_path, model_name, lora_path).half().cuda()
     return tokenizer, model
 
 # ---------------- 2. chatGLM-single -----------------
